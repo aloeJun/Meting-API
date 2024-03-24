@@ -1,19 +1,8 @@
 ## 写在前面
 
-Meting后端的api结构较为复杂，基础是一个[接口](https://github.com/metowolf/Meting/blob/master/src/Meting.php)，原作者在此基础上增加了[php后端](https://github.com/metowolf/Meting-API/blob/master/api/root/var/www/meting/public/index.php)，又用node做了一层[wrapper](https://github.com/metowolf/Meting-API/tree/master/server)。
+Meting后端的基础是一个[接口](https://github.com/metowolf/Meting/blob/master/src/Meting.php)，原作者在此基础上增加了[php后端](https://github.com/metowolf/Meting-API/blob/master/api/root/var/www/meting/public/index.php)，又用node做了一层[wrapper](https://github.com/metowolf/Meting-API/tree/master/server)。
 
-同时可以发现原作者在docker hub上传了php后端的[镜像](https://hub.docker.com/r/metowolf/meting)，但没有node的镜像（仓库中仍有Dockerfile）。
-
-原作者大佬的api服务可能不太稳定，于是我在上面两个Dockerfile的基础上新生成了单一的Dockerfile，仅仅对外暴露一个3000端口。并且微改了一些代码，适配了vercel的serverless function。这个版本在[v1](https://github.com/xizeyoupan/Meting-API/tree/v1)。
-
-此版本解决了一些的问题，但可能还有一些问题，比如：
-
-- 依旧不易自行部署
-- 对国内的云函数不太适配
-- 新的音乐源扩展、维护困难
-- 即使在国内访问，如果后端部署在国外，腾讯系音乐仍然无法解析
-
-为此，我开了个新的分支。
+同时可以发现原作者在docker hub上传了php后端的[镜像](https://hub.docker.com/r/metowolf/meting)，但没有node的镜像（仓库中仍有Dockerfile）。于是重写了一下。
 
 ## Feature
 
@@ -24,13 +13,13 @@ Meting后端的api结构较为复杂，基础是一个[接口](https://github.co
 
 ## 进度
 
-|               | server参数名称 | 图片 | 歌词 | url | 单曲/song | 歌单/playlist | 歌手/artist |
-| ------------- | -------------- | ---- | ---- | --- | --------- | ------------- | ----------- |
-| 网易云        | netease        | √    | √    | √   | √         | √             | √           |
-| qq音乐        | tencent        | √    | √    | √   | √         | √             | ×           |
-| youtube music | ytmusic        | √    | √⁰   | √   | √         | √             | ×           |
-| spotify       | spotify        | √    | √⁰   | √⁰  | √⁰        | √⁰            | ×           |
-| more..        |                |      |      |     |           |               |             |
+|               | server参数名称 | 图片 | 歌词 | url | 单曲/song | 歌单/playlist | 歌手/artist | 搜索/search |
+| ------------- | -------------- | ---- | ---- | --- | --------- | ------------- | ----------- |--------- |
+| 网易云        | netease        | √    | √    | √   | √         | √             | √           |√         |
+| qq音乐        | tencent        | √    | √    | √   | √         | √             | ×           |×         |
+| youtube music | ytmusic        | √    | √⁰   | √   | √         | √             | ×           |×         |
+| spotify       | spotify        | √    | √⁰   | √⁰  | √⁰        | √⁰            | ×           |×         |
+| more..        |                |      |      |     |           |               |             |         |
 
 ## 地区限制
 
@@ -52,7 +41,7 @@ Meting后端的api结构较为复杂，基础是一个[接口](https://github.co
 | youtube music         | √²   | √    |
 | spotify music         | √²   | √    |
 
-⁰youtube和spotify的歌词由于不易访问，由 https://github.com/xizeyoupan/syncedlyrics_aio 检索而来，歌词匹配准确度不会特别高。spotify的音乐源由 https://github.com/spotDL/spotify-downloader 检索而来，歌曲匹配准确度不会很高，并且获取url的时间较长，使spotify歌曲加载缓慢。
+⁰youtube和spotify的歌词由 https://github.com/xizeyoupan/syncedlyrics_aio 检索而来，歌词匹配准确度不会特别高。spotify的音乐源由 https://github.com/spotDL/spotify-downloader 检索而来，歌曲匹配准确度不会很高，并且获取url的时间较长。
 
 ¹使用jsonp，**需要替换前端插件**， https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js => https://cdn.jsdelivr.net/npm/@xizeyoupan/meting@latest/dist/Meting.min.js , or 
 https://unpkg.com/meting@2.0.1/dist/Meting.min.js => https://unpkg.com/@xizeyoupan/meting@latest/dist/Meting.min.js
@@ -150,7 +139,7 @@ fork本项目后新建一个[project](https://dash.deno.com/projects)，首先�
 
 ### 反向代理
 
-对于很多HTTP框架的代理来说，只需设置X-Forwarded请求头或transparent proxy。但由于本项目使用了轻量化框架Hono，进行反向代理的时候可能会产生一些令人不适的链接。这里我用了一个自定义的请求头`X-Forwarded-Url`来暴力处理origin和路径的前缀。
+对于很多HTTP框架的代理来说，只需设置X-Forwarded请求头或transparent proxy。但由于本项目使用了轻量化框架Hono，目前官方似乎还不支持。所以实际有用的的请求头只有`X-Forwarded-Host`。
 
 比如我用nginx想让请求 `http://localhost:8099/meting` 的流量全部转发到 `http://localhost:3000` ，直接这么写是不行的：
 
@@ -176,7 +165,7 @@ fork本项目后新建一个[project](https://dash.deno.com/projects)，首先�
 
       location /meting/ {
          proxy_pass http://localhost:3000/;
-         proxy_set_header X-Forwarded-Url $scheme://$host:$server_port/meting;
+         proxy_set_header X-Forwarded-Host $scheme://$host:$server_port/meting;
       }
    }
    ```
@@ -187,7 +176,7 @@ fork本项目后新建一个[project](https://dash.deno.com/projects)，首先�
    http://localhost:8099 {
          handle_path /meting* {
                   reverse_proxy http://localhost:3000 {
-                        header_up X-Forwarded-Url {scheme}://{host}:{port}/meting
+                        header_up X-Forwarded-Host {scheme}://{host}:{port}/meting
                   }
          }
    }
@@ -212,7 +201,7 @@ fork本项目后新建一个[project](https://dash.deno.com/projects)，首先�
 
         location /meting/ {
             proxy_pass http://localhost:3000/;
-            proxy_set_header X-Forwarded-Url $scheme://$host:$server_port/meting;
+            proxy_set_header X-Forwarded-Host $scheme://$host:$server_port/meting;
         }
       }
   ```
@@ -223,7 +212,7 @@ fork本项目后新建一个[project](https://dash.deno.com/projects)，首先�
       tls ./server.crt ./server.key
       handle_path /meting* {
          reverse_proxy http://localhost:3000 {
-            header_up X-Forwarded-Url {scheme}://{host}:{port}/meting
+            header_up X-Forwarded-Host {scheme}://{host}:{port}/meting
          }
       }
    }

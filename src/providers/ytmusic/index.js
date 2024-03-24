@@ -1,6 +1,6 @@
-import config from "../../config.js"
+import { YT_API } from "./config.js"
 const support_type = ['song', 'playlist']
-const YT_API = config.YT_API
+
 const handle = async (type, id, cookie = '') => {
     let result
     const query = `?server=ytmusic&type=${type}&id=${id}`

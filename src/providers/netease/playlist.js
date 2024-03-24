@@ -8,7 +8,7 @@ export const get_playlist = async (id, cookie = '') => {
         s: 8,
     }
     //不放在data里面避免请求带上无用的数据
-    let limit = 0 || Infinity
+    let limit = 200 || Infinity
     let offset = 0 || 0
 
     let res = await request('POST', `https://music.163.com/api/v6/playlist/detail`, data, { crypto: 'api', })

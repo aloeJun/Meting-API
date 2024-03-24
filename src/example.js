@@ -12,6 +12,7 @@ export default {
         "artist": { "show": true, "value": "12441107" },
         "lrc": { "show": false, "value": "2015217630" },
         "url": { "show": false, "value": "473403185" },
+        "search": { "show": true, "value": "KN33S0XXX" },
     },
     "ytmusic": {
         "playlist": { "show": true, "value": "RDCLAK5uy_l12ynH8dyLsBmE11ToAHLm9P04NS2i9ME" },
